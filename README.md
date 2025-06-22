@@ -1,6 +1,6 @@
 # Excel Manager
 
-This simple Flask application provides a web interface to perform CRUD (create, read, update, delete) operations on a local Excel file.
+This simple Flask application provides a web interface to perform CRUD (create, read, update, delete) operations on a local Excel file. Each record includes an **Option** field with values `test1`, `test2` or `test`.
 
 ## Setup
 
