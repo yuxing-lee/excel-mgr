@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify, render_template
 import openpyxl
+import datetime
 import os
 import sys
 
@@ -22,7 +23,11 @@ def read_data():
     ws = wb.active
     data = []
     for row in ws.iter_rows(min_row=2, values_only=True):
-        data.append({"id": row[0], "name": row[1], "option": row[2]})
+        date_value = row[3] if len(row) > 3 else None
+        if date_value and not isinstance(date_value, (datetime.date, datetime.datetime)):
+            app.logger.warning("Invalid date format in row %s: %s", row[0], date_value)
+            date_value = None
+        data.append({"id": row[0], "name": row[1], "option": row[2], "date": date_value})
     return data
 
 
@@ -41,11 +46,21 @@ def add_row():
     id_ = request.json.get('id')
     name = request.json.get('name')
     option = request.json.get('option')
+    date_str = request.json.get('date')
     if not id_ or not name or option is None:
         return jsonify({"error": "id, name and option required"}), 400
+    date_value = None
+    if date_str:
+        try:
+            date_value = datetime.datetime.fromisoformat(date_str).date()
+        except ValueError:
+            app.logger.warning("Invalid date format: %s", date_str)
     wb = load_workbook()
     ws = wb.active
-    ws.append([id_, name, option])
+    row_data = [id_, name, option]
+    if ws.max_column > 3:
+        row_data.append(date_value)
+    ws.append(row_data)
     wb.save(EXCEL_FILE)
     return jsonify({"success": True})
 
@@ -55,14 +70,23 @@ def update_row():
     id_ = request.json.get('id')
     name = request.json.get('name')
     option = request.json.get('option')
+    date_str = request.json.get('date')
     if not id_ or name is None or option is None:
         return jsonify({"error": "id, name and option required"}), 400
+    date_value = None
+    if date_str:
+        try:
+            date_value = datetime.datetime.fromisoformat(date_str).date()
+        except ValueError:
+            app.logger.warning("Invalid date format: %s", date_str)
     wb = load_workbook()
     ws = wb.active
     for row in ws.iter_rows(min_row=2):
         if str(row[0].value) == str(id_):
             row[1].value = name
             row[2].value = option
+            if len(row) > 3:
+                row[3].value = date_value
             wb.save(EXCEL_FILE)
             return jsonify({"success": True})
     return jsonify({"error": "ID not found"}), 404
