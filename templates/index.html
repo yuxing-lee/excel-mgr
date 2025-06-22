@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Excel Manager</title>
+    <style>
+        table { border-collapse: collapse; }
+        td, th { border: 1px solid #ccc; padding: 4px 8px; }
+    </style>
+</head>
+<body>
+<h1>Excel Manager</h1>
+
+<table id="data-table">
+    <thead>
+    <tr><th>ID</th><th>Name</th></tr>
+    </thead>
+    <tbody></tbody>
+</table>
+
+<h2>Add Row</h2>
+<input id="add-id" placeholder="ID">
+<input id="add-name" placeholder="Name">
+<button onclick="addRow()">Add</button>
+
+<h2>Update Row</h2>
+<input id="update-id" placeholder="ID">
+<input id="update-name" placeholder="New Name">
+<button onclick="updateRow()">Update</button>
+
+<h2>Delete Row</h2>
+<input id="delete-id" placeholder="ID">
+<button onclick="deleteRow()">Delete</button>
+
+<script>
+async function fetchData() {
+    const response = await fetch('/api/data');
+    const data = await response.json();
+    const tbody = document.querySelector('#data-table tbody');
+    tbody.innerHTML = '';
+    for (const row of data) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${row.id}</td><td>${row.name}</td>`;
+        tbody.appendChild(tr);
+    }
+}
+
+async function addRow() {
+    const id = document.getElementById('add-id').value;
+    const name = document.getElementById('add-name').value;
+    await fetch('/api/add', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({id, name})
+    });
+    fetchData();
+}
+
+async function updateRow() {
+    const id = document.getElementById('update-id').value;
+    const name = document.getElementById('update-name').value;
+    await fetch('/api/update', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({id, name})
+    });
+    fetchData();
+}
+
+async function deleteRow() {
+    const id = document.getElementById('delete-id').value;
+    await fetch('/api/delete', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({id})
+    });
+    fetchData();
+}
+
+fetchData();
+</script>
+</body>
+</html>
