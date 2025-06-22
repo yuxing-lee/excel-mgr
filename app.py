@@ -1,9 +1,11 @@
 from flask import Flask, request, jsonify, render_template
 import openpyxl
 import os
+import sys
 
-app = Flask(__name__)
-EXCEL_FILE = 'data.xlsx'
+BASE_DIR = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
+app = Flask(__name__, template_folder=os.path.join(BASE_DIR, 'templates'))
+EXCEL_FILE = os.path.join(os.getcwd(), 'data.xlsx')
 
 
 def load_workbook():

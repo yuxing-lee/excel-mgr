@@ -15,3 +15,16 @@ This simple Flask application provides a web interface to perform CRUD (create, 
 3. Open `http://localhost:5000` in your browser.
 
 The application automatically creates `data.xlsx` if it does not exist.
+
+## Building a Windows executable
+
+You can package the server as a stand-alone Windows executable using
+`PyInstaller`:
+
+```bash
+pip install pyinstaller
+pyinstaller --onefile --add-data "templates;templates" app.py
+```
+
+The generated `dist/app.exe` starts the server and creates `data.xlsx` in the
+same directory when first run.
