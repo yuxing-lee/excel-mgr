@@ -6,51 +6,75 @@
     <style>
         table { border-collapse: collapse; }
         td, th { border: 1px solid #ccc; padding: 4px 8px; }
+        #container { display: flex; }
+        #main { flex: 1; }
+        #soon { width: 250px; margin-left: 20px; }
     </style>
 </head>
 <body>
 <h1>Excel Manager</h1>
 
-<table id="data-table">
-    <thead>
-    <tr><th>ID</th><th>Name</th><th>Option</th></tr>
-    </thead>
-    <tbody></tbody>
-</table>
+<div id="container">
+<div id="main">
+    <input id="search" placeholder="Search..." oninput="fetchData()">
+    <select id="filter-option" onchange="fetchData()">
+        <option value="">All</option>
+        <option value="test1">test1</option>
+        <option value="test2">test2</option>
+        <option value="test">test</option>
+    </select>
 
-<h2>Add Row</h2>
-<input id="add-id" placeholder="ID">
-<input id="add-name" placeholder="Name">
-<select id="add-option">
-    <option value="test1">test1</option>
-    <option value="test2">test2</option>
-    <option value="test">test</option>
-</select>
-<button onclick="addRow()">Add</button>
+    <table id="data-table">
+        <thead>
+        <tr><th>ID</th><th>Name</th><th>Option</th><th>Date</th></tr>
+        </thead>
+        <tbody></tbody>
+    </table>
 
-<h2>Update Row</h2>
-<input id="update-id" placeholder="ID">
-<input id="update-name" placeholder="New Name">
-<select id="update-option">
-    <option value="test1">test1</option>
-    <option value="test2">test2</option>
-    <option value="test">test</option>
-</select>
-<button onclick="updateRow()">Update</button>
+    <h2>Add Row</h2>
+    <input id="add-id" placeholder="ID">
+    <input id="add-name" placeholder="Name">
+    <input id="add-date" type="date">
+    <select id="add-option">
+        <option value="test1">test1</option>
+        <option value="test2">test2</option>
+        <option value="test">test</option>
+    </select>
+    <button onclick="addRow()">Add</button>
 
-<h2>Delete Row</h2>
-<input id="delete-id" placeholder="ID">
-<button onclick="deleteRow()">Delete</button>
+    <h2>Update Row</h2>
+    <input id="update-id" placeholder="ID">
+    <input id="update-name" placeholder="New Name">
+    <input id="update-date" type="date">
+    <select id="update-option">
+        <option value="test1">test1</option>
+        <option value="test2">test2</option>
+        <option value="test">test</option>
+    </select>
+    <button onclick="updateRow()">Update</button>
+
+    <h2>Delete Row</h2>
+    <input id="delete-id" placeholder="ID">
+    <button onclick="deleteRow()">Delete</button>
+</div>
+<div id="soon">
+    <h3>Expiring Soon</h3>
+    Days: <input id="days" type="number" value="7" onchange="fetchSoon()">
+    <div id="soon-list"></div>
+</div>
+</div>
 
 <script>
 async function fetchData() {
-    const response = await fetch('/api/data');
+    const search = document.getElementById('search').value;
+    const option = document.getElementById('filter-option').value;
+    const response = await fetch(`/api/data?search=${encodeURIComponent(search)}&option=${encodeURIComponent(option)}`);
     const data = await response.json();
     const tbody = document.querySelector('#data-table tbody');
     tbody.innerHTML = '';
     for (const row of data) {
         const tr = document.createElement('tr');
-        tr.innerHTML = `<td>${row.id}</td><td>${row.name}</td><td>${row.option}</td>`;
+        tr.innerHTML = `<td>${row.id}</td><td>${row.name}</td><td>${row.option}</td><td>${row.date || ''}</td>`;
         tbody.appendChild(tr);
     }
 }
@@ -58,25 +82,29 @@ async function fetchData() {
 async function addRow() {
     const id = document.getElementById('add-id').value;
     const name = document.getElementById('add-name').value;
+    const date = document.getElementById('add-date').value;
     const option = document.getElementById('add-option').value;
     await fetch('/api/add', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({id, name, option})
+        body: JSON.stringify({id, name, option, date})
     });
     fetchData();
+    fetchSoon();
 }
 
 async function updateRow() {
     const id = document.getElementById('update-id').value;
     const name = document.getElementById('update-name').value;
+    const date = document.getElementById('update-date').value;
     const option = document.getElementById('update-option').value;
     await fetch('/api/update', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({id, name, option})
+        body: JSON.stringify({id, name, option, date})
     });
     fetchData();
+    fetchSoon();
 }
 
 async function deleteRow() {
@@ -87,9 +115,24 @@ async function deleteRow() {
         body: JSON.stringify({id})
     });
     fetchData();
+    fetchSoon();
+}
+
+async function fetchSoon() {
+    const days = document.getElementById('days').value;
+    const response = await fetch(`/api/soon?days=${days}`);
+    const data = await response.json();
+    const container = document.getElementById('soon-list');
+    container.innerHTML = '';
+    for (const row of data) {
+        const div = document.createElement('div');
+        div.textContent = `${row.id} - ${row.name} (${row.date})`;
+        container.appendChild(div);
+    }
 }
 
 fetchData();
+fetchSoon();
 </script>
 </body>
 </html>
