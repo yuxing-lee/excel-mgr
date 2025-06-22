@@ -12,7 +12,7 @@ def load_workbook():
     if not os.path.exists(EXCEL_FILE):
         wb = openpyxl.Workbook()
         ws = wb.active
-        ws.append(["ID", "Name"])
+        ws.append(["ID", "Name", "Option"])
         wb.save(EXCEL_FILE)
     return openpyxl.load_workbook(EXCEL_FILE)
 
@@ -22,7 +22,7 @@ def read_data():
     ws = wb.active
     data = []
     for row in ws.iter_rows(min_row=2, values_only=True):
-        data.append({"id": row[0], "name": row[1]})
+        data.append({"id": row[0], "name": row[1], "option": row[2]})
     return data
 
 
@@ -40,11 +40,12 @@ def list_data():
 def add_row():
     id_ = request.json.get('id')
     name = request.json.get('name')
-    if not id_ or not name:
-        return jsonify({"error": "id and name required"}), 400
+    option = request.json.get('option')
+    if not id_ or not name or option is None:
+        return jsonify({"error": "id, name and option required"}), 400
     wb = load_workbook()
     ws = wb.active
-    ws.append([id_, name])
+    ws.append([id_, name, option])
     wb.save(EXCEL_FILE)
     return jsonify({"success": True})
 
@@ -53,13 +54,15 @@ def add_row():
 def update_row():
     id_ = request.json.get('id')
     name = request.json.get('name')
-    if not id_ or not name:
-        return jsonify({"error": "id and name required"}), 400
+    option = request.json.get('option')
+    if not id_ or name is None or option is None:
+        return jsonify({"error": "id, name and option required"}), 400
     wb = load_workbook()
     ws = wb.active
     for row in ws.iter_rows(min_row=2):
         if str(row[0].value) == str(id_):
             row[1].value = name
+            row[2].value = option
             wb.save(EXCEL_FILE)
             return jsonify({"success": True})
     return jsonify({"error": "ID not found"}), 404
